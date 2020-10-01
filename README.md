@@ -24,8 +24,11 @@ cd ..
 Change the path of the directories below accordingly:
 
 base_dir="your_path/EG_condor/datarun/condor/"
+
 output_dir="your_path/EG_condor/datarun/results/"
+
 run_dir="your_path/EG_condor/datarun/results/"
+
 source_dir="your_path/EG_condor/"
 
 The following lines in this script are in charge for producing the jobs and submitting it:
@@ -37,8 +40,11 @@ source ${jobfilename}
 Change the path of the directories below accordingly:
 
 base_dir="your_path/EG_condor/datarun/condor/"
+
 output_dir="your_path/EG_condor/datarun/results/"
+
 run_dir="your_path/EG_condor/datarun/run_tmp/"
+
 source_dir="your_path/EG_condor/"
 
 5) egamma_test_condor.C: 
