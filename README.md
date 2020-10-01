@@ -14,6 +14,7 @@ mkdir datarun
 cd datarun
 
 mkdir condor results run_tmp
+
 cd ..
 
 2) run.sh file: check whether you want to run variations and/or MC nominal or both commenting the pointed lines 
@@ -21,6 +22,7 @@ cd ..
 3) split.sh file: 
 
 Change the path of the directories below accordingly:
+
 base_dir="your_path/EG_condor/datarun/condor/"
 output_dir="your_path/EG_condor/datarun/results/"
 run_dir="your_path/EG_condor/datarun/results/"
@@ -33,6 +35,7 @@ source ${jobfilename}
 
 4) LCie.sh
 Change the path of the directories below accordingly:
+
 base_dir="your_path/EG_condor/datarun/condor/"
 output_dir="your_path/EG_condor/datarun/results/"
 run_dir="your_path/EG_condor/datarun/run_tmp/"
