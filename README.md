@@ -8,6 +8,7 @@ In your home directory, setup the HTcondor command:
 ++++++++++++++++++++++++++++++++++++++++++++
 
 export PATH=/afs/ihep.ac.cn/soft/common/sysgroup/hep_job/bin:$PATH
+
 ++++++++++++++++++++++++++++++++++++++++++++
 
 1) Create an directory named EG_condor and clone this repository in it:
