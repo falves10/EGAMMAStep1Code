@@ -10,7 +10,9 @@ export PATH=/afs/ihep.ac.cn/soft/common/sysgroup/hep_job/bin:$PATH
 git clone https://github.com/falves10/EGAMMAStep1Code.git
 
 mkdir datarun
+
 cd datarun
+
 mkdir condor results run_tmp
 cd ..
 
