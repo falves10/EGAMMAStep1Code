@@ -1,8 +1,6 @@
 #!/bin/bash
 
-echo "aaa"
 if [[ $# -ne 3 ]]; then
-echo "bbbbb"
 echo "USAGE: LCie.sh <jobname> <executable> <systematics>   <luminosity>"
 else
 jobname=$1
@@ -13,11 +11,8 @@ ijob=$1
 shift
 mc=$1
 
-echo "here"
 
-echo "teste hahado" $jobaname $diffVar $ijob $mc
 
-echo $mc
 base_dir="/publicfs/atlas/atlasnew/higgs/hgg/fabiolucio/EgammCalibration/Codes_ntuples/datarun/condor/Calib/"
 output_dir="/publicfs/atlas/atlasnew/higgs/hgg/fabiolucio/EgammCalibration/Codes_ntuples/datarun/results/Calib/"
 run_dir="/publicfs/atlas/atlasnew/higgs/hgg/fabiolucio/EgammCalibration/Codes_ntuples/datarun/run_tmp/Calib/"
@@ -51,19 +46,10 @@ lsetup "root 6.20.06-x86_64-centos7-gcc8-opt"
 cp ${base_dir}/${jobname}/exe/egamma_test_condor.C ./
 cp ${base_dir}/${jobname}/exe/"$mc".list ./
  
-#cp ${base_dir}/${jobname}/exe/Link ./ -fr
-#cp ${base_dir}/${jobname}/exe/toberunFile.list ./
-#cp ${base_dir}/${jobname}/input/"$jobname"_"$ijob".txt  ./toberun.txt
-
 
 a="condor"
 echo "MC" $mc
 root -l -b -q egamma_test_condor.C\(\"$mc\"\,\"$a\"\) > log 2>err
-
-
-#rm -f Link/FILLHIST/output/${diffVar}/AF2yy/hist.root
-#./CreateH125yyBkg FILLHIST ${diffVar} AF2yy CollectionTree,isprecut,reset_sample > log 2>err
-#cp -fr Link/FILLHIST/output/${diffVar}/AF2yy/hist.root  ${output_dir}/${jobname}/root/fastyy_${ijob}.root
 
 #########################################################################
 popd
