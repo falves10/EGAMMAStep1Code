@@ -6,6 +6,7 @@ For job summiting on IHEP HT condor, see the instructions below:
 In your home directory, setup the HTcondor command: 
 
 ++++++++++++++++++++++++++++++++++++++++++++
+
 export PATH=/afs/ihep.ac.cn/soft/common/sysgroup/hep_job/bin:$PATH
 ++++++++++++++++++++++++++++++++++++++++++++
 
