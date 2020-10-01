@@ -40,3 +40,5 @@ source_dir="your_path/EG_condor/"
 Enable or disable the variable you want to run on in the beginning of the code: varname vector
 If you want to run using the layer1/2 electron calibrated energy vectors, uncomment it where it appears 
 In the function mySave, change the name of the directory you would like to save the results
+
+After performing the changes described previosly, you can launch the production as: sh run.sh 
