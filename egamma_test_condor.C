@@ -170,16 +170,18 @@ int egamma_test_condor(TString mc, string geoName){
   //TString path = "/publicfs/atlas/atlasnew/higgs/hgg/fabiolucio/EgammCalibration/Codes_ntuples/";
   TString path = Form("/publicfs/atlas/atlasnew/higgs/hgg/fabiolucio/EgammCalibration/Codes_ntuples/%s/",geoName.c_str() );
   
+  cout<<" PATH " << path << endl;
+    
     
    
   vector<TString> varname;
-  varname.push_back("m_mass2el");
-  //varname.push_back("m_eOverp");
+  //varname.push_back("m_mass2el");
+  varname.push_back("m_eOverp");
   //varname.push_back("m_E1_E2");
   
   vector<TString> vartagname;
-  vartagname.push_back("m_{ee} [GeV]");
-  //vartagname.push_back("E/p");
+  //vartagname.push_back("m_{ee} [GeV]");
+  vartagname.push_back("E/p");
   //vartagname.push_back("E1/E2");
     
   for(int ivar = 0; ivar < varname.size(); ivar++){
@@ -271,11 +273,15 @@ int egamma_test_condor(TString mc, string geoName){
       vector<double> *el2_energy = 0;
       vector<double> *el1_energy_sysPS = 0;
       vector<double> *el2_energy_sysPS = 0;
-
     
-        
-      chain[iperiod]->SetBranchStatus("eta1", 1);
-      chain[iperiod]->SetBranchAddress("eta1", &eta1);
+      int isNominal, isTightVar;
+      double energy1_TightVar, energy2_TightVar, phi1_TightVar, phi2_TightVar, eta1_TightVar, eta2_TightVar, pt1_TightVar, pt2_TightVar;
+      double weight_TightVar, m12_TightVar;
+      
+      
+                  
+      chain[iperiod]->SetBranchStatus("eta1", 1); //leading electron
+      chain[iperiod]->SetBranchAddress("eta1", &eta1); //sub-leading electron
       chain[iperiod]->SetBranchStatus("eta2", 1);
       chain[iperiod]->SetBranchAddress("eta2", &eta2);
       chain[iperiod]->SetBranchStatus("m12", 1);
@@ -298,6 +304,33 @@ int egamma_test_condor(TString mc, string geoName){
       chain[iperiod]->SetBranchAddress("phi2", &phi2);
       chain[iperiod]->SetBranchAddress("calenergy1", &calenergy1);
       chain[iperiod]->SetBranchAddress("calenergy2", &calenergy2);
+        
+      chain[iperiod]->SetBranchStatus("isNominal", 1);
+      chain[iperiod]->SetBranchAddress("isNominal", &isNominal);
+
+      //TightLH variables
+      chain[iperiod]->SetBranchStatus("isTightVar", 1);
+      chain[iperiod]->SetBranchAddress("isTightVar", &isTightVar);
+      chain[iperiod]->SetBranchStatus("energy1_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("energy1_TightVar", &energy1_TightVar);
+      chain[iperiod]->SetBranchStatus("energy2_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("energy2_TightVar", &energy2_TightVar);
+      chain[iperiod]->SetBranchStatus("phi1_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("phi1_TightVar", &phi1_TightVar);
+      chain[iperiod]->SetBranchStatus("phi2_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("phi2_TightVar", &phi2_TightVar);
+      chain[iperiod]->SetBranchStatus("eta1_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("eta1_TightVar", &eta1_TightVar);
+      chain[iperiod]->SetBranchStatus("eta2_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("eta2_TightVar", &eta2_TightVar);
+      chain[iperiod]->SetBranchStatus("pt1_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("pt1_TightVar", &pt1_TightVar);
+      chain[iperiod]->SetBranchStatus("pt2_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("pt2_TightVar", &pt2_TightVar);
+      chain[iperiod]->SetBranchStatus("m12_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("m12_TightVar", &m12_TightVar);
+      chain[iperiod]->SetBranchStatus("weight_TightVar", 1);
+      chain[iperiod]->SetBranchAddress("weight_TightVar", &weight_TightVar);
      
       
         
@@ -329,9 +362,6 @@ int egamma_test_condor(TString mc, string geoName){
             chain[iperiod]->SetBranchStatus("weight_norm", 1);
             chain[iperiod]->SetBranchAddress("weight_norm", &weight_norm);
       }
-      
-      
-      
       if(iperiod == 1){
             //	cout<<" period 1 " << endl;
             chain[iperiod]->SetBranchStatus("el1_rawcl_E1", 1);
@@ -350,43 +380,265 @@ int egamma_test_condor(TString mc, string geoName){
       
       
       int ntotevtR = chain[iperiod]->GetEntries();
-      //int ntotevtR = 5;
+      //int ntotevtR = 1000;
+      bool doNonNominalElectronID = true;
+        
       cout<<"total event "<<ntotevtR<< " variable " << varname[ivar] << endl;
       cout<<" reco size "<< recolist.size() << endl;
 	
       if(iperiod == 0) std::cout<<"chain[iperiod]->GetEntries() = 0 "<<chain[iperiod]->GetEntries()<<std::endl;
       if(iperiod == 1) std::cout<<"chain[iperiod]->GetEntries() = 1 "<<chain[iperiod]->GetEntries()<<std::endl;
     
+    
+      
+    
+      TFile f1(Form("histo_%d.root",iperiod),"recreate");
+        
+      TH1F* h_m12=new TH1F(Form("histo_m12_NOM_SEL_%d",iperiod), "m12_NOM_SEL", 70, 60, 200); 
+      TH1F* h_pt1=new TH1F(Form("histo_pt1_NOM_SEL_%d",iperiod), "pt1_NOM_SEL", 50, 0, 200); 
+        
+      TH1F* h_m12_tight=new TH1F(Form("histo_m12_TIGHT_SEL_%d",iperiod), "m12_TIGHT_SEL", 70, 60, 200); 
+      TH1F* h_pt1_tight=new TH1F(Form("histo_pt1_TIGHT_SEL_%d",iperiod), "pt1_TIGHT_SEL", 50, 0, 200); 
+        
+      TH1F* h_pTe1=new TH1F(Form("histo_pTe1_NOM_SEL_%d",iperiod), "pTe1_NOM_SEL", 50, 0, 200);
+      TH1F* h_pTe2=new TH1F(Form("histo_pTe2_NOM_SEL_%d",iperiod), "pTe2_NOM_SEL", 50, 0, 200);
+        
+      TH1F* h_eta1=new TH1F(Form("histo_eta1_NOM_SEL_%d",iperiod), "eta1_NOM_SEL", 40, -3, 3);
+      TH1F* h_eta2=new TH1F(Form("histo_eta2_NOM_SEL_%d",iperiod), "eta2_NOM_SEL", 40, -3, 3);
+        
+      TH1F* h_pTe1_tight=new TH1F(Form("histo_pTe1_TIGHT_SEL_%d",iperiod), "pTe1_TIGHT_SEL", 50, 0, 200);
+      TH1F* h_pTe2_tight=new TH1F(Form("histo_pTe2_TIGHT_SEL_%d",iperiod), "pTe2_TIGHT_SEL", 50, 0, 200);
+        
+      TH1F* h_eta1_tight=new TH1F(Form("histo_eta1_TIGHT_SEL_%d",iperiod), "eta1_TIGHT_SEL", 40, -3, 3);
+      TH1F* h_eta2_tight=new TH1F(Form("histo_eta2_TIGHT_SEL_%d",iperiod), "eta2_TIGHT_SEL", 40, -3, 3);
+          
+      //kinematics checks 
+      TH1F* h_m12_afterKinCut_nom=new TH1F(Form("h_m12_afterKinCut_nom_%d",iperiod), "h_m12_afterKinCut_nom", 70, 60, 200);
+      TH1F* h_m12_afterKinCut_NoPass_nom=new TH1F(Form("h_m12_afterKinCut_NoPass_nom%d",iperiod), "h_m12_afterKinCut_NoPass_nom", 70, 60, 200);
+      TH1F* h_m12_afterKinCut_tight=new TH1F(Form("h_m12_afterKinCut_tight_%d",iperiod), "h_m12_afterKinCut_tight", 70, 60, 200); 
+      TH1F* h_m12_afterKinCut_NoPass_tight=new TH1F(Form("h_m12_afterKinCut_NoPass_tight_%d",iperiod), "h_m12_afterKinCut_NoPass_tight", 70, 60, 200); 
+        
+        
+      TH1F* h_pTe1_sync_nom=new TH1F(Form("histo_pTe1_sync_nom_%d",iperiod), "pTe1_sync_nom", 50, 0, 200);
+      TH1F* h_pTe1_sync_tight=new TH1F(Form("histo_pTe2_sync_tight_%d",iperiod), "pTe2_sync_tight", 50, 0, 200);    
+        
+      TH1F* h_eta1_sync_nom=new TH1F(Form("histo_eta1_sync_nom_%d",iperiod), "eta1_sync_nom", 40, -3, 3);
+      TH1F* h_eta1_sync_tight=new TH1F(Form("histo_eta2_sync_tight_%d",iperiod), "eta2_sync_tight", 40, -3, 3);    
+    
+        
+        
+      /*    
+        
+      TH1F* h_m12_afterReq=new TH1F(Form("histo_m12_%d",iperiod), "m12_AfterReq", 70, 60, 200); 
+      TH1F* h_pt1_afterReq=new TH1F(Form("histo_pt1_%d",iperiod), "pt1_AfterReq", 50, 0, 200); 
+        
+      TH1F* h_m12_tight_afterReq=new TH1F(Form("histo_m12_%d",iperiod), "m12_tight_AfterReq", 70, 60, 200); 
+      TH1F* h_pt1_tight_afterReq=new TH1F(Form("histo_pt1_%d",iperiod), "pt1tight_AfterReq", 50, 0, 200); 
+      
+      */
+        
+      int syncL1 = 0;
+      int syncL2 = 0;    
+    
+      int evts_passing_tightReq = 0; 
+      int evts_passing_tightReq_kinematicCuts = 0; 
+      int evts_passing_tightReq_kinematicCuts_2 = 0; 
+      int evts_passing_tightReq_Sync = 0; 
         
       for (int j=0; j<ntotevtR;j++)
       {
             PrintProgressBar(j, ntotevtR);
             chain[iperiod]->GetEntry(j);
 
-             
+            
+          
             float weight = 1.;
             if(iperiod==1)
             {
-              if(RunNumber<290000)  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
-              else if(RunNumber<310000)  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
-              else  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+              if(RunNumber<290000)
+              {
+                  
+                  if(doNonNominalElectronID)
+                  {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                  }
+                  else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+                    
+                  
+              }  
+              else if(RunNumber<310000)
+              {
+                  if(doNonNominalElectronID)
+                  {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                  }
+                  else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+              }  
+              else
+              {
+                    if(doNonNominalElectronID)
+                    {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                    }
+                    else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+              }  
 	        }
             else if (iperiod==0)
             {
-                if(RunNumber<290000)  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
-                else if(RunNumber<310000)  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
-                else  weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+                if(RunNumber<290000)
+                {
+
+                  if(doNonNominalElectronID)
+                  {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                  }
+                  else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+                  
+              }  
+                else if(RunNumber<310000)
+                {
+                  if(doNonNominalElectronID)
+                  {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                  }
+                  else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+              }  
+                else
+                {
+                    if(doNonNominalElectronID)
+                    {
+                      if(isTightVar) weight = lumi*weight_norm*weight_TightVar;//weight_norm contains sum_weight
+                    }
+                    else weight = lumi*weight_norm*weight;//weight_norm contains sum_weight
+              }  
+            }
+          
+            //cout<<" EVT " << j << endl;  
+            //cout<<" isNominal " << isNominal << " isTightVar " << isTightVar << " m12 " << m12/1000 << " pt1 " << pt1/1000 << " m12_tight " << m12_TightVar/1000 << " pt1_TightVar " << pt1_TightVar/1000 <<  endl;
+            /*
+            if(isNominal)
+            {
+                for(int i = 0; i < el1_energy->size(); i++) cout << " energies is Nominal " << el1_energy->at(i) << endl;
+                
+            }
+            if (isTightVar)
+            {
+                for(int i = 0; i < el1_energy->size(); i++) cout << " energies is isTightVar " << el1_energy->at(i) << endl;
+            }
+            */
+            
+            
+            //Nominal selection
+            h_m12->Fill(m12/1000);
+            h_pTe1->Fill(pt1/1000);
+            h_pTe2->Fill(pt2/1000);
+            h_eta1->Fill(eta1);
+            h_eta2->Fill(eta2);
+        
+            
+            //variables saved passing the tightLH selection
+            if(isTightVar)
+            {
+                h_m12_tight->Fill(m12_TightVar/1000);
+                h_pTe1_tight->Fill(pt1_TightVar/1000);
+                h_pTe2_tight->Fill(pt2_TightVar/1000);
+                h_eta1_tight->Fill(eta1_TightVar);
+                h_eta2_tight->Fill(eta2_TightVar);
+                
+                
+                
             }
           
             
-     
+            //apply selection (electron ID medium (nominal) in case doNonNominalElectronID is set false or tight in case doNonNominalElectronID is set as true)
+            if(doNonNominalElectronID) if(!isTightVar) continue;
+            evts_passing_tightReq++;
+            /*h_m12_afterReq->Fill(m12/1000);
+            h_pt1_afterReq->Fill(pt1/1000);
+          
+            h_m12_tight_afterReq->Fill(m12_TightVar/1000);
+            h_pt1_tight_afterReq->Fill(pt1_TightVar/1000);*/
+          
+        
              
-	if(m12/1000.<80.) continue;
-	if(m12/1000.>105.) continue;
-
-	if(pt1<0.) continue;
-	if(pt2<0.) continue;
+    
+    
+    if (isTightVar)
+    {
+            if(m12_TightVar/1000.<80.) continue;
+            if(m12_TightVar/1000.>105.) continue;
+        
+            if(pt1_TightVar<0.) continue;
+            if(pt2_TightVar<0.) continue;
+        
+            evts_passing_tightReq_kinematicCuts++;
+            
+    }
+    else
+    {
+        if(m12/1000.<80.) continue;
+        if(m12/1000.>105.) continue;
+        
+        if(pt1<0.) continue;
+        if(pt2<0.) continue;
+    }
 	
+    evts_passing_tightReq_kinematicCuts_2++;
+          
+	//checking synchronous
+    bool isLeadingLeptonSync = false;
+    bool isSubLeadingLeptonSync = false;
+       
+    if(doNonNominalElectronID)
+    {
+        if(isTightVar)
+        {
+            double dEta_leadingLepton = (eta1_TightVar-eta1);
+            double dPhi_leadingLepton = (phi1_TightVar-phi1);
+            double dR_leadinglepton = sqrt( pow(dEta_leadingLepton , 2) + pow(dPhi_leadingLepton , 2) ); 
+        
+            double dEta_subleadingLepton = (eta2_TightVar-eta2);
+            double dPhi_subleadingLepton = (phi2_TightVar-phi2);
+            double dR_subleadinglepton = sqrt( pow(dEta_subleadingLepton , 2) + pow(dPhi_subleadingLepton , 2) ); 
+        
+            //cout<<" eta1_TightVar " << eta1_TightVar << " eta1 " << eta1 << " phi1_TightVar " << phi1_TightVar << " phi1 " << phi1 << endl;
+        
+            //cout<<" dR_leadinglepton  " << dR_leadinglepton << " dR_subleadinglepton " << dR_subleadinglepton << endl;
+        
+            if(dR_leadinglepton == 0)
+            {
+                //cout<<" leading lepton on TightVar evts synchronous to nominal " << endl;
+                isLeadingLeptonSync = true;
+                
+                h_pTe1_sync_nom->Fill(pt1/1000);
+                h_pTe1_sync_tight->Fill(pt1_TightVar/1000);
+                h_eta1_sync_nom->Fill(eta1);
+                h_eta1_sync_tight->Fill(eta1_TightVar);
+            } 
+            
+            if(dR_subleadinglepton == 0)
+            {
+                //cout<<" subleading lepton on TightVar evts synchronous to nominal " << endl;
+                isSubLeadingLeptonSync = true;
+            } 
+        
+        }      
+    }
+    
+    bool tightAndSync = false;
+    
+    if(doNonNominalElectronID)
+    {
+        if( isLeadingLeptonSync && isSubLeadingLeptonSync ) tightAndSync = true;
+    }
+    
+    if(!tightAndSync) continue;      
+    evts_passing_tightReq_Sync++;
+          
+    
+    
+     
+          
 	float weight_data = 1.;
 	float target_var = 0.; // mass	
 	
@@ -394,10 +646,13 @@ int egamma_test_condor(TString mc, string geoName){
 	if(std::isnan(target_var)) continue;
           
     
-	
+	//cout<<" varname[ivar] " << varname[ivar] << endl;
       
-	if(iperiod==0){	 
-	  if(calibrated){
+	if(iperiod==0)
+    {	 
+      
+	  if(calibrated)
+      {
           
 	    if(el1_rawcl_E1/el1_rawcl_E2>2.) continue;
 	    if(el1_rawcl_E1/el1_rawcl_E2<0.) continue;
@@ -409,25 +664,33 @@ int egamma_test_condor(TString mc, string geoName){
 	      m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][0]->Fill(target_var,weight);
 	    }
 	    
-        
-	  
-          
+    
 	    if(varname[ivar]=="m_mass2el"){
-	      target_var = m12/1000.; // mass
+	      
+          target_var = m12/1000.; // mass
 	      //Fill DATA histos
 	   
           m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][0]->Fill(target_var,weight);
 	     
             //For using electron energies from layer1:
-           vector<double> el_mee1 = E1layer(el1_energy);
-           vector<double> el_mee2 = E1layer(el2_energy);
+            //vector<double> el_mee1 = E1layer(el1_energy);
+            //vector<double> el_mee2 = E1layer(el2_energy);
           //For using electron energies from layer2:
            //vector<double> el_mee1 = E2layer(el1_energy);
            //vector<double> el_mee2 = E2layer(el2_energy);
             
+            vector<double> el_mee1;
+            vector<double> el_mee2;
+            
+           
+            el_mee1 = E1layer(el1_energy);
+            el_mee2 = E1layer(el2_energy);
+        
+           
+            
             
            for(int i = 0; i < el_mee1.size(); i++)
-           {
+            {
                 TLorentzVector P1;
                 TLorentzVector P2;
                 TLorentzVector Psum;
@@ -445,15 +708,15 @@ int egamma_test_condor(TString mc, string geoName){
                 //Fill DATA histos
                 //m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_ccl_E1/el1_ccl_E2))][i+2]->Fill(target_var,weight_data);
                 m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][i+2]->Fill(target_var,weight);
-              }
+            }
 	    }
-        
-          
-        
 	    if(varname[ivar]=="m_eOverp"){
 	      //if(fabs(eta1) > 1.35) continue;
           
-	      target_var = calenergy1/cosh(eta1)/el1_ptTrack;
+          
+          target_var = calenergy1/cosh(eta1)/el1_ptTrack;
+                
+           //target_var = calenergy1/cosh(eta1)/el1_ptTrack;
           //cout<<"period 0 calenergy1 " << calenergy1 << endl;
 	      
 	      //Fill DATA histos
@@ -461,22 +724,29 @@ int egamma_test_condor(TString mc, string geoName){
 	      //m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][0]->Fill(target_var,weight);//MC
           m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][0]->Fill(target_var,weight_data);
           
+          vector<double> elLayer1;
+          elLayer1 = E1layer(el1_energy);
+          
           //vector<double> elLayer1 = E1layer(el1_energy);
           //if using el_layer2, uncomment the below line
-          vector<double> elLayer2 = E2layer(el1_energy);
+          //vector<double> elLayer2 = E2layer(el1_energy);
         
             
-          for(int i = 0; i < elLayer2.size(); i++){ 
+            for(int i = 0; i < elLayer1.size(); i++){ 
+            //for(int i = 0; i < el1_energy->size(); i++){ //for data, once it has only 16 bias variations
               
               //cout<<" Variations elLayer1[i]: " << elLayer1[i] << endl;
-              target_var = elLayer2[i]/cosh(eta1)/el1_ptTrack;
+              target_var = elLayer1[i]/cosh(eta1)/el1_ptTrack;
+              
+              //target_var = el1_energy->at(i)/cosh(eta1)/el1_ptTrack;
               //m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][i+2]->Fill(target_var,weight);//MC weight
               m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][i+2]->Fill(target_var,weight_data);//MC weight
+              
 	      }
               
             
 	    }
-         
+
 	  }
 	  else
       {
@@ -490,9 +760,11 @@ int egamma_test_condor(TString mc, string geoName){
 	    if(varname[ivar]=="m_mass2el") target_var = m12/1000.; // mass
 	    m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_ccl_E1/el1_ccl_E2))][0]->Fill(target_var,weight_data);
 	  }
+      
 	}
 	//Fill MC histos
 	
+    
 	if(iperiod==1){
 	  if(varname[ivar]=="m_el_E1") target_var = el1_rawcl_E1/1000.; // E1	   
 	  if(varname[ivar]=="m_el_E2") target_var = el1_rawcl_E2/1000.; // E2	 
@@ -505,7 +777,9 @@ int egamma_test_condor(TString mc, string geoName){
 	  if(varname[ivar]=="m_eOverp")
       {
         //cout<<" Nominal element in variation ntuple calenergy1: (period1) " << calenergy1 << endl;
-	    target_var = calenergy1/cosh(eta1)/el1_ptTrack;
+	    
+        target_var = calenergy1/cosh(eta1)/el1_ptTrack;
+          
         //cout<<"target_var "<< target_var << endl;
 	    //Fill DATA histos
 	    m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][1]->Fill(target_var,weight);
@@ -514,17 +788,39 @@ int egamma_test_condor(TString mc, string geoName){
       if(varname[ivar]=="m_mass2el")
       {
           target_var = m12/1000.; // mass
-          m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][1]->Fill(target_var,weight);
-    }	 
+          m_histo[std::make_pair(binNbOfEta(eta1),binNbOfEnergy(el1_rawcl_E1/el1_rawcl_E2))][1]->Fill(target_var,weight);  
+      }	 
       
 	  
 	}
-         
+    
           
       }//end loop entries
       
+      h_m12->Write();  
+      h_pTe1->Write();
+      h_pTe2->Write();
+      h_eta1->Write();
+      h_eta2->Write();
+      h_m12_tight->Write();  
+      h_pTe1_tight->Write();
+      h_pTe2_tight->Write();
+      h_eta1_tight->Write();
+      h_eta2_tight->Write();
+      h_pTe1_sync_nom->Write();
+      h_pTe1_sync_tight->Write();
+      h_eta1_sync_nom->Write();
+      h_eta1_sync_tight->Write();
+      
+      cout<< " syncL1 " << syncL1 << " syncL2 " << syncL2 << " evts_passing_tightReq " << evts_passing_tightReq << " evts_passing_tightReq_kinematicCuts " << evts_passing_tightReq_kinematicCuts << " evts_passing_tightReq_kinematicCuts_2 " << evts_passing_tightReq_kinematicCuts_2 << " evts_passing_tightReq_Sync " << evts_passing_tightReq_Sync << endl;    
+        
+      f1.Close();
+      
+        
     }//end loop period
 
+      
+      
     for (unsigned int iEtaBin = 0; iEtaBin < maxEta; iEtaBin++) 
     {
         //if(iEtaBin > 1) continue;
